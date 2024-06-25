@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capturador de Ubicación con Categorías y Mapa</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        input[type="text"], input[type="color"] {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        #categoryButtons {
+            margin-top: 10px;
+        }
+        #map {
+            height: 400px;
+            margin-top: 20px;
+        }
+        #coordsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #coordsTable th, #coordsTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #coordsTable th {
+            background-color: #f2f2f2;
+        }
+        #coordsTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Capturador de Ubicación con Categorías y Mapa</h1>
+        
+        <h2>Creador de Categorías</h2>
+        <input type="color" id="categoryColor" value="#4CAF50">
+        <input type="text" id="categoryName" placeholder="Nombre de la categoría">
+        <button id="createCategoryBtn">Crear Categoría</button>
+        
+        <div id="categoryButtons"></div>
+        
+        <h2>Captura de Ubicación</h2>
+        <button id="permissionBtn">Solicitar Permiso</button>
+        <button id="downloadBtn">Descargar CSV</button>
+        
+        <div id="map"></div>
+        
+        <div id="coordsList"></div>
+    </div>
+
+    <script>
+        let coordinates = [];
+        let categories = [];
+        let hasPermission = false;
+        let map;
+        let markers = [];
+
+        const permissionBtn = document.getElementById('permissionBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const createCategoryBtn = document.getElementById('createCategoryBtn');
+        const categoryButtons = document.getElementById('categoryButtons');
+
+        permissionBtn.addEventListener('click', requestPermission);
+        downloadBtn.addEventListener('click', downloadCSV);
+        createCategoryBtn.addEventListener('click', createCategory);
+
+        // Inicializar el mapa
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        function requestPermission() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        hasPermission = true;
+                        permissionBtn.style.display = 'none';
+                        alert("Permiso concedido. Ahora puedes capturar ubicaciones.");
+                        map.setView([position.coords.latitude, position.coords.longitude], 13);
+                    },
+                    (error) => {
+                        console.error("Error al obtener el permiso:", error);
+                        alert("Error al obtener el permiso. Por favor, intenta de nuevo y asegúrate de dar permiso en el diálogo del navegador.");
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Tu navegador no soporta geolocalización.");
+            }
+        }
+
+        function createCategory() {
+            const color = document.getElementById('categoryColor').value;
+            const name = document.getElementById('categoryName').value.trim();
+            
+            if (name) {
+                const category = { name, color };
+                categories.push(category);
+                createCategoryButton(category);
+                document.getElementById('categoryName').value = '';
+                captureLocation(category, 'creacion');
+            } else {
+                alert("Por favor, introduce un nombre para la categoría.");
+            }
+        }
+
+        function createCategoryButton(category) {
+            const button = document.createElement('button');
+            button.textContent = category.name;
+            button.style.backgroundColor = category.color;
+            button.style.color = getContrastColor(category.color);
+            button.addEventListener('click', () => captureLocation(category, 'registro'));
+            categoryButtons.appendChild(button);
+        }
+
+        function captureLocation(category, tipo) {
+            if (!hasPermission) {
+                alert("Por favor, solicita permiso primero.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const timestamp = new Date().toISOString();
+                    const newCoord = { 
+                        latitude, 
+                        longitude, 
+                        timestamp,
+                        category: category.name,
+                        color: category.color,
+                        tipo: tipo
+                    };
+                    coordinates.push(newCoord);
+                    updateCoordsList();
+                    addMarkerToMap(newCoord);
+                },
+                (error) => {
+                    console.error("Error al obtener la ubicación:", error);
+                    alert("Error al obtener la ubicación. Por favor, intenta de nuevo.");
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        function addMarkerToMap(coord) {
+            const marker = L.circleMarker([coord.latitude, coord.longitude], {
+                radius: 8,
+                fillColor: coord.color,
+                color: '#000',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            marker.bindTooltip(coord.timestamp);
+            markers.push(marker);
+            map.setView([coord.latitude, coord.longitude], 13);
+        }
+
+        function downloadCSV() {
+            if (coordinates.length === 0) {
+                alert("No hay coordenadas para descargar.");
+                return;
+            }
+
+            const csv = Papa.unparse(coordinates);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "coordenadas.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function updateCoordsList() {
+            const list = document.getElementById('coordsList');
+            list.innerHTML = '<h3>Coordenadas capturadas:</h3>';
+            const table = document.createElement('table');
+            table.id = 'coordsTable';
+            table.innerHTML = `
+                <tr>
+                    <th>Categoría</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                </tr>
+            `;
+            coordinates.forEach((coord) => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td style="color: ${coord.color};">${coord.category}</td>
+                    <td>${coord.latitude.toFixed(7)}</td>
+                    <td>${coord.longitude.toFixed(7)}</td>
+                    <td>${formatDate(coord.timestamp)}</td>
+                    <td>${coord.tipo}</td>
+                `;
+            });
+            list.appendChild(table);
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('es-ES', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function getContrastColor(hexcolor) {
+            if (hexcolor.slice(0, 1) === '#') {
+                hexcolor = hexcolor.slice(1);
+            }
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+    </script>
+</body>
+</html>
