@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,43 +65,127 @@
         #coordsTable tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        .legend {
+            padding: 6px 8px;
+            font: 14px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            line-height: 24px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        .leaflet-control-heatmap {
+            background-color: white;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+        }
+        #descriptionInput {
+            width: 100%;
+            max-width: 300px;
+            margin-top: 10px;
+        }
+		.modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #modalDescription {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        #modalButtons {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Capturador de Ubicación con Categorías y Mapa</h1>
-        
+
         <h2>Creador de Categorías</h2>
         <input type="color" id="categoryColor" value="#4CAF50">
         <input type="text" id="categoryName" placeholder="Nombre de la categoría">
         <button id="createCategoryBtn">Crear Categoría</button>
-        
+
         <div id="categoryButtons"></div>
-        
-        <h2>Captura de Ubicación</h2>
-        <button id="permissionBtn">Solicitar Permiso</button>
-        <button id="downloadBtn">Descargar CSV</button>
-        
+
         <div id="map"></div>
-        
+		<button id="downloadBtn">Descargar CSV</button>
         <div id="coordsList"></div>
     </div>
+	   <!-- Modal para la descripción -->
+    <div id="descriptionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Añadir descripción</h2>
+            <textarea id="modalDescription" rows="4" placeholder="Descripción breve (máx. 100 caracteres)" maxlength="100"></textarea>
+            <div id="modalButtons">
+                <button id="saveDescription">Guardar</button>
+                <button id="cancelDescription">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
-    <script>
+	<script>
         let coordinates = [];
         let categories = [];
-        let hasPermission = false;
         let map;
         let markers = [];
+        let heatLayer;
+        let heatmapVisible = false;
+        let currentCategory;
+        let currentPosition;
 
-        const permissionBtn = document.getElementById('permissionBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const createCategoryBtn = document.getElementById('createCategoryBtn');
         const categoryButtons = document.getElementById('categoryButtons');
+        const modal = document.getElementById('descriptionModal');
+        const closeModal = document.getElementsByClassName('close')[0];
+        const saveDescriptionBtn = document.getElementById('saveDescription');
+        const cancelDescriptionBtn = document.getElementById('cancelDescription');
 
-        permissionBtn.addEventListener('click', requestPermission);
         downloadBtn.addEventListener('click', downloadCSV);
         createCategoryBtn.addEventListener('click', createCategory);
+        closeModal.addEventListener('click', closeDescriptionModal);
+        saveDescriptionBtn.addEventListener('click', saveDescription);
+        cancelDescriptionBtn.addEventListener('click', closeDescriptionModal);
 
         // Inicializar el mapa
         map = L.map('map').setView([0, 0], 2);
@@ -108,36 +193,34 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        function requestPermission() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        hasPermission = true;
-                        permissionBtn.style.display = 'none';
-                        alert("Permiso concedido. Ahora puedes capturar ubicaciones.");
-                        map.setView([position.coords.latitude, position.coords.longitude], 13);
-                    },
-                    (error) => {
-                        console.error("Error al obtener el permiso:", error);
-                        alert("Error al obtener el permiso. Por favor, intenta de nuevo y asegúrate de dar permiso en el diálogo del navegador.");
-                    },
-                    { enableHighAccuracy: true }
-                );
-            } else {
-                alert("Tu navegador no soporta geolocalización.");
-            }
-        }
+        // Añadir leyenda
+        let legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = '<h4>Leyenda</h4>';
+            return div;
+        };
+        legend.addTo(map);
+
+        // Añadir control de mapa de calor
+        let heatmapControl = L.control({position: 'topright'});
+        heatmapControl.onAdd = function (map) {
+            let div = L.DomUtil.create('div', 'leaflet-control-heatmap');
+            div.innerHTML = '<button onclick="toggleHeatmap()">Mapa de Calor</button>';
+            return div;
+        };
+        heatmapControl.addTo(map);
 
         function createCategory() {
             const color = document.getElementById('categoryColor').value;
             const name = document.getElementById('categoryName').value.trim();
-            
+
             if (name) {
                 const category = { name, color };
                 categories.push(category);
                 createCategoryButton(category);
                 document.getElementById('categoryName').value = '';
-                captureLocation(category, 'creacion');
+                updateLegend();
             } else {
                 alert("Por favor, introduce un nombre para la categoría.");
             }
@@ -148,38 +231,60 @@
             button.textContent = category.name;
             button.style.backgroundColor = category.color;
             button.style.color = getContrastColor(category.color);
-            button.addEventListener('click', () => captureLocation(category, 'registro'));
+            button.addEventListener('click', () => startCaptureLocation(category));
             categoryButtons.appendChild(button);
         }
 
-        function captureLocation(category, tipo) {
-            if (!hasPermission) {
-                alert("Por favor, solicita permiso primero.");
-                return;
+        function startCaptureLocation(category) {
+            currentCategory = category;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentPosition = position;
+                        openDescriptionModal();
+                    },
+                    (error) => {
+                        console.error("Error al obtener la ubicación:", error);
+                        alert("Error al obtener la ubicación. Por favor, intenta de nuevo y asegúrate de dar permiso en el diálogo del navegador.");
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Tu navegador no soporta geolocalización.");
             }
+        }
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    const timestamp = new Date().toISOString();
-                    const newCoord = { 
-                        latitude, 
-                        longitude, 
-                        timestamp,
-                        category: category.name,
-                        color: category.color,
-                        tipo: tipo
-                    };
-                    coordinates.push(newCoord);
-                    updateCoordsList();
-                    addMarkerToMap(newCoord);
-                },
-                (error) => {
-                    console.error("Error al obtener la ubicación:", error);
-                    alert("Error al obtener la ubicación. Por favor, intenta de nuevo.");
-                },
-                { enableHighAccuracy: true }
-            );
+        function openDescriptionModal() {
+            modal.style.display = "block";
+            document.getElementById('modalDescription').value = '';
+        }
+
+        function closeDescriptionModal() {
+            modal.style.display = "none";
+            currentCategory = null;
+            currentPosition = null;
+        }
+
+        function saveDescription() {
+            const description = document.getElementById('modalDescription').value.trim();
+            if (currentCategory && currentPosition) {
+                const { latitude, longitude } = currentPosition.coords;
+                const timestamp = new Date().toISOString();
+                const newCoord = {
+                    latitude,
+                    longitude,
+                    timestamp,
+                    category: currentCategory.name,
+                    color: currentCategory.color,
+                    tipo: 'registro',
+                    description: description
+                };
+                coordinates.push(newCoord);
+                updateCoordsList();
+                addMarkerToMap(newCoord);
+                updateHeatmap();
+            }
+            closeDescriptionModal();
         }
 
         function addMarkerToMap(coord) {
@@ -192,7 +297,7 @@
                 fillOpacity: 0.8
             }).addTo(map);
 
-            marker.bindTooltip(coord.timestamp);
+            marker.bindTooltip(`${formatDate(coord.timestamp)}<br>${coord.description}`);
             markers.push(marker);
             map.setView([coord.latitude, coord.longitude], 13);
         }
@@ -229,6 +334,7 @@
                     <th>Longitud</th>
                     <th>Fecha</th>
                     <th>Tipo</th>
+                    <th>Descripción</th>
                 </tr>
             `;
             coordinates.forEach((coord) => {
@@ -239,6 +345,7 @@
                     <td>${coord.longitude.toFixed(7)}</td>
                     <td>${formatDate(coord.timestamp)}</td>
                     <td>${coord.tipo}</td>
+                    <td>${coord.description}</td>
                 `;
             });
             list.appendChild(table);
@@ -246,9 +353,9 @@
 
         function formatDate(isoString) {
             const date = new Date(isoString);
-            return date.toLocaleString('es-ES', { 
-                year: 'numeric', 
-                month: 'long', 
+            return date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
@@ -265,6 +372,36 @@
             var b = parseInt(hexcolor.substr(4,2),16);
             var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
             return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        function updateLegend() {
+            let legendContent = '<h4>Leyenda</h4>';
+            categories.forEach(category => {
+                legendContent += `<i style="background:${category.color}"></i> ${category.name}<br>`;
+            });
+            document.querySelector('.legend').innerHTML = legendContent;
+        }
+
+        function updateHeatmap() {
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+            }
+            let heatData = coordinates.map(coord => [coord.latitude, coord.longitude, 1]);
+            heatLayer = L.heatLayer(heatData, {radius: 25});
+            if (heatmapVisible) {
+                heatLayer.addTo(map);
+            }
+        }
+
+        function toggleHeatmap() {
+            heatmapVisible = !heatmapVisible;
+            if (heatmapVisible) {
+                heatLayer.addTo(map);
+                document.querySelector('.leaflet-control-heatmap button').textContent = "Ocultar Mapa de Calor";
+            } else {
+                map.removeLayer(heatLayer);
+                document.querySelector('.leaflet-control-heatmap button').textContent = "Mostrar Mapa de Calor";
+            }
         }
     </script>
 </body>
