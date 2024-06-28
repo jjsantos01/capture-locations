@@ -11,10 +11,15 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
             background-color: #f0f0f0;
+            display: flex;
+        }
+        .main-container {
+            flex-grow: 1;
+            padding: 20px;
+            transition: margin-right 0.3s;
         }
         .container {
             background-color: white;
@@ -88,82 +93,63 @@
             border-radius: 5px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
         }
-        #descriptionInput {
-            width: 100%;
-            max-width: 300px;
-            margin-top: 10px;
-        }
-		.modal {
-            display: none;
+        #sidepanel {
             position: fixed;
-            z-index: 1000;
-            left: 0;
             top: 0;
-            width: 100%;
+            right: -300px;
+            width: 300px;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
+            background-color: white;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 1000;
             padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 5px;
+            box-sizing: border-box;
         }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+        #sidepanel.open {
+            right: 0;
+        }
+        #closeSidepanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             cursor: pointer;
+            font-size: 20px;
         }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        #modalDescription {
+        #sidepanelDescription {
             width: 100%;
             margin-bottom: 10px;
-        }
-        #modalButtons {
-            text-align: right;
+            resize: vertical;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Capturador de Ubicación con Categorías y Mapa</h1>
+    <div class="main-container">
+        <div class="container">
+            <h1>Capturador de Ubicación con Categorías y Mapa</h1>
 
-        <h2>Creador de Categorías</h2>
-        <input type="color" id="categoryColor" value="#4CAF50">
-        <input type="text" id="categoryName" placeholder="Nombre de la categoría">
-        <button id="createCategoryBtn">Crear Categoría</button>
+            <h2>Creador de Categorías</h2>
+            <input type="color" id="categoryColor" value="#4CAF50">
+            <input type="text" id="categoryName" placeholder="Nombre de la categoría">
+            <button id="createCategoryBtn">Crear Categoría</button>
 
-        <div id="categoryButtons"></div>
+            <div id="categoryButtons"></div>
 
-        <div id="map"></div>
-		<button id="downloadBtn">Descargar CSV</button>
-        <div id="coordsList"></div>
-    </div>
-	   <!-- Modal para la descripción -->
-    <div id="descriptionModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Añadir descripción</h2>
-            <textarea id="modalDescription" rows="4" placeholder="Descripción breve (máx. 100 caracteres)" maxlength="100"></textarea>
-            <div id="modalButtons">
-                <button id="saveDescription">Guardar</button>
-                <button id="cancelDescription">Cancelar</button>
-            </div>
+            <div id="map"></div>
+            <button id="downloadBtn">Descargar CSV</button>
+            <div id="coordsList"></div>
         </div>
     </div>
 
-	<script>
+    <div id="sidepanel">
+        <span id="closeSidepanel">&times;</span>
+        <h2>Añadir descripción</h2>
+        <textarea id="sidepanelDescription" rows="4" placeholder="Descripción breve (máx. 100 caracteres)" maxlength="100"></textarea>
+        <button id="saveDescription">Guardar</button>
+        <button id="cancelDescription">Cancelar</button>
+    </div>
+
+    <script>
         let coordinates = [];
         let categories = [];
         let map;
@@ -176,16 +162,16 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const createCategoryBtn = document.getElementById('createCategoryBtn');
         const categoryButtons = document.getElementById('categoryButtons');
-        const modal = document.getElementById('descriptionModal');
-        const closeModal = document.getElementsByClassName('close')[0];
+        const sidepanel = document.getElementById('sidepanel');
+        const closeSidepanel = document.getElementById('closeSidepanel');
         const saveDescriptionBtn = document.getElementById('saveDescription');
         const cancelDescriptionBtn = document.getElementById('cancelDescription');
 
         downloadBtn.addEventListener('click', downloadCSV);
         createCategoryBtn.addEventListener('click', createCategory);
-        closeModal.addEventListener('click', closeDescriptionModal);
+        closeSidepanel.addEventListener('click', closeSidepanelHandler);
         saveDescriptionBtn.addEventListener('click', saveDescription);
-        cancelDescriptionBtn.addEventListener('click', closeDescriptionModal);
+        cancelDescriptionBtn.addEventListener('click', closeSidepanelHandler);
 
         // Inicializar el mapa
         map = L.map('map').setView([0, 0], 2);
@@ -241,7 +227,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         currentPosition = position;
-                        openDescriptionModal();
+                        openSidepanel();
                     },
                     (error) => {
                         console.error("Error al obtener la ubicación:", error);
@@ -254,19 +240,21 @@
             }
         }
 
-        function openDescriptionModal() {
-            modal.style.display = "block";
-            document.getElementById('modalDescription').value = '';
+        function openSidepanel() {
+            sidepanel.classList.add('open');
+            document.getElementById('sidepanelDescription').value = '';
+            document.querySelector('.main-container').style.marginRight = '300px';
         }
 
-        function closeDescriptionModal() {
-            modal.style.display = "none";
+        function closeSidepanelHandler() {
+            sidepanel.classList.remove('open');
+            document.querySelector('.main-container').style.marginRight = '0';
             currentCategory = null;
             currentPosition = null;
         }
 
         function saveDescription() {
-            const description = document.getElementById('modalDescription').value.trim();
+            const description = document.getElementById('sidepanelDescription').value.trim();
             if (currentCategory && currentPosition) {
                 const { latitude, longitude } = currentPosition.coords;
                 const timestamp = new Date().toISOString();
@@ -284,7 +272,7 @@
                 addMarkerToMap(newCoord);
                 updateHeatmap();
             }
-            closeDescriptionModal();
+            closeSidepanelHandler();
         }
 
         function addMarkerToMap(coord) {
