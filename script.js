@@ -8,6 +8,7 @@ let currentCategory;
 let currentPosition;
 
 const downloadBtn = document.getElementById('downloadBtn');
+const downloadGeoJSONBtn = document.getElementById('downloadGeoJSONBtn');
 const uploadFile = document.getElementById('uploadFile');
 const createCategoryBtn = document.getElementById('createCategoryBtn');
 const categoryButtons = document.getElementById('categoryButtons');
@@ -15,18 +16,25 @@ const sidepanel = document.getElementById('sidepanel');
 const closeSidepanel = document.getElementById('closeSidepanel');
 const saveDescriptionBtn = document.getElementById('saveDescription');
 const cancelDescriptionBtn = document.getElementById('cancelDescription');
+const clearLocalStorageBtn = document.getElementById('clearLocalStorageBtn');
 
-downloadBtn.addEventListener('click', downloadCSV);
 uploadFile.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    loadCSV(file);
+  const file = event.target.files[0];
+  confirmLoadCSV(file);
 }
 );
-
 createCategoryBtn.addEventListener('click', createCategory);
 closeSidepanel.addEventListener('click', closeSidepanelHandler);
 saveDescriptionBtn.addEventListener('click', saveDescription);
 cancelDescriptionBtn.addEventListener('click', closeSidepanelHandler);
+document.addEventListener('DOMContentLoaded', () => {
+  updateCategorySelect()
+  loadCoordinatesFromLocalStorage();
+});
+downloadBtn.addEventListener('click', downloadCSV);
+downloadGeoJSONBtn.addEventListener('click', downloadGeoJSON);
+clearLocalStorageBtn.addEventListener('click', confirmClearLocalStorage);
+
 
 // Inicializar el mapa
 map = L.map('map').setView([0, 0], 2);
@@ -155,10 +163,48 @@ function saveDescription() {
       coordinates.push(newCoord);
       addMarkerToMap(newCoord);
   }
-
+  saveCoordinatesToLocalStorage();
   updateCoordsList();
   updateHeatmap();
   closeSidepanelHandler();
+}
+
+function saveCoordinatesToLocalStorage() {
+  localStorage.setItem('coordinates', JSON.stringify(coordinates));
+}
+
+function loadCoordinatesFromLocalStorage() {
+  const savedCoordinates = localStorage.getItem('coordinates');
+  if (savedCoordinates) {
+      coordinates = JSON.parse(savedCoordinates);
+      updatePageContent()
+  }
+}
+
+function clearLocalStorage() {
+  localStorage.removeItem('coordinates');
+  coordinates = [];
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+  updateCoordsList();
+  updateHeatmap();
+  document.getElementById('categoryButtons').innerHTML = '';
+}
+
+function confirmClearLocalStorage() {
+  // Verificar si hay datos guardados
+  const savedCoordinates = localStorage.getItem('coordinates');
+
+  if (savedCoordinates && JSON.parse(savedCoordinates).length > 0) {
+    // Si hay datos, mostrar el mensaje de confirmación
+    if (confirm("Borrará todos los datos actuales, ¿está seguro que desea continuar?")) {
+      clearLocalStorage();
+    }
+    // Si el usuario cancela, no hacer nada
+  } else {
+    // Si no hay datos, simplemente limpiar
+    clearLocalStorage();
+  }
 }
 
 function addMarkerToMap(coord) {
@@ -202,6 +248,45 @@ function downloadCSV() {
     }
 }
 
+function downloadGeoJSON() {
+    if (coordinates.length === 0) {
+        alert("No hay coordenadas para descargar.");
+        return;
+    }
+    coordinates.forEach((coord, index) => {
+        coord.id = index;
+    } );
+    const geojson = {
+        type: 'FeatureCollection',
+        features: coordinates.map(coord => {
+            return {
+                type: 'Feature',
+                properties: {
+                    category: coord.category,
+                    description: coord.description,
+                    timestamp: coord.timestamp
+                },
+                geometry: {
+                    type: 'Point',
+                    coordinates: [coord.longitude, coord.latitude]
+                }
+            };
+        })
+    };
+    const blob = new Blob([JSON.stringify(geojson)], { type: 'application/json' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "coordenadas.geojson");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+}
+
 function loadCSV(file) {
     Papa.parse(file, {
         header: true,
@@ -211,21 +296,38 @@ function loadCSV(file) {
                 coord.latitude = parseFloat(coord.latitude);
                 coord.longitude = parseFloat(coord.longitude);
             });
-            coordinates.forEach(addMarkerToMap);
-            categories = [...new Set(coordinates.map(coord => coord.category))].map(name => {
-                return {
-                    name,
-                    color: generateRandomColor()
-                };
-            }
-            );
-            updateCategorySelect();
-            updateLegend();
-            updateCoordsList();
-            updateHeatmap();
-            categories.forEach(createCategoryButton);
+            saveCoordinatesToLocalStorage();
+            updatePageContent()
         }
     });
+}
+
+function confirmLoadCSV(file) {
+  const savedCoordinates = localStorage.getItem('coordinates');
+  if (savedCoordinates && JSON.parse(savedCoordinates).length > 0) {
+    if (confirm("Borrará los datos existente, ¿está seguro que desea continuar?")) {
+      clearLocalStorage();
+      loadCSV(file);
+    }
+  } else {
+    loadCSV(file);
+  }
+}
+
+function updatePageContent() {
+  coordinates.forEach(coord => addMarkerToMap(coord));
+  categories = [...new Set(coordinates.map(coord => `${coord.category}+${coord.color}`))].map(category => {
+      return {
+          name: category.split('+')[0],
+          color: category.split('+')[1],
+      };
+  });
+  console.log(categories);
+  updateCategorySelect();
+  updateLegend();
+  updateCoordsList();
+  updateHeatmap();
+  categories.forEach(createCategoryButton);
 }
 
 function updateCategorySelect() {
@@ -314,6 +416,7 @@ function deleteCoordinate(event) {
   coordinates.splice(index, 1);
 
   // Actualizar la lista de coordenadas y el mapa de calor
+  saveCoordinatesToLocalStorage();
   updateCoordsList();
   updateHeatmap();
 }
@@ -370,5 +473,3 @@ function toggleHeatmap() {
         document.querySelector('.leaflet-control-heatmap button').textContent = "Mostrar Mapa de Calor";
     }
 }
-
-document.addEventListener('DOMContentLoaded', updateCategorySelect);

@@ -13,19 +13,21 @@
 <body>
     <div class="main-container">
         <div class="container">
-            <h1>Capturador de Ubicación</h1>
+            <h1>Capturador de Ubicaciones</h1>
 
             <h2>Creador de Categorías</h2>
             <input type="color" id="categoryColor" value="#4CAF50">
             <input type="text" id="categoryName" placeholder="Nombre de la categoría">
             <button id="createCategoryBtn">Crear Categoría</button>
+            <input type="file" id="uploadFile" accept=".csv">
 
             <div id="categoryButtons"></div>
 
             <div id="map"></div>
             <button id="downloadBtn">Descargar CSV</button>
-            <input type="file" id="uploadFile" accept=".csv">
+            <button id="downloadGeoJSONBtn">Descargar GeoJSON</button>
             <div id="coordsList"></div>
+            <button id="clearLocalStorageBtn">Limpiar datos</button>
         </div>
     </div>
 
