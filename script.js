@@ -184,10 +184,12 @@ function loadCoordinatesFromLocalStorage() {
 function clearLocalStorage() {
   localStorage.removeItem('coordinates');
   coordinates = [];
+  categories = [];
   markers.forEach(marker => map.removeLayer(marker));
   markers = [];
   updateCoordsList();
   updateHeatmap();
+  updateLegend();
   document.getElementById('categoryButtons').innerHTML = '';
 }
 
