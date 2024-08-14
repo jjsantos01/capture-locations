@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecobici Ride History</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+</head>
+<body>
+    <h1>Ecobici Ride History</h1>
+    <input type="text" id="userId" placeholder="Ingresa tu User ID" value="5f892ee1-4b56-459b-8e67-9763756dd10a">
+    <button onclick="getRides()">Obtener viajes</button>
+    <div id="result"></div>
+
+    <script>
+        const allRides = [];
+
+        async function getRides(startTimeMs = 0, userId = "") {
+            if (!userId) {
+                userId = document.getElementById('userId').value;
+            }
+
+            const cookies = {
+                'bfe-bssat-Ecobici': userId,
+            };
+
+            const headers = {
+                'accept': '*/*',
+                'accept-language': 'es-ES,es;q=0.9,en;q=0.8',
+                'cache-control': 'no-cache',
+                'content-type': 'application/json',
+                'pragma': 'no-cache',
+                'priority': 'u=1, i',
+            };
+
+            const data = {
+                operationName: 'GetCurrentUserRides',
+                variables: {
+                    startTimeMs: startTimeMs.toString(),
+                },
+                query: 'query GetCurrentUserRides($startTimeMs: String, $memberId: String) {\n  member(id: $memberId) {\n    rideHistory(startTimeMs: $startTimeMs) {\n  hasMore\n    rideHistoryList {\n        rideId\n        startTimeMs\n        endTimeMs\n         duration\n     startAddressStr\n  endAddressStr\n distance {\n value \n} \n}\n __typename\n    }\n    __typename\n  }\n}',
+            };
+
+            try {
+                const response = await axios.post('https://usuario.ecobici.cdmx.gob.mx/bikesharefe-gql', data, { headers, withCredentials: true });
+                const output = {
+                    data: response.data.data.member.rideHistory.rideHistoryList,
+                    hasMore: response.data.data.member.rideHistory.hasMore
+                };
+
+                displayResult(output);
+                return output;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error al obtener los datos. Verifica tu User ID y conexión.';
+            }
+        }
+
+        function displayResult(output) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<h2>Resultados:</h2>';
+
+            if (output.data.length === 0) {
+                resultDiv.innerHTML += '<p>No se encontraron viajes.</p>';
+            } else {
+                const ul = document.createElement('ul');
+                output.data.forEach(ride => {
+                    const li = document.createElement('li');
+                    li.textContent = `Viaje ID: ${ride.rideId}, Inicio: ${new Date(parseInt(ride.startTimeMs)).toLocaleString()}, Duración: ${ride.duration} segundos`;
+                    ul.appendChild(li);
+                });
+                resultDiv.appendChild(ul);
+            }
+
+            if (output.hasMore) {
+                resultDiv.innerHTML += '<p>Hay más viajes disponibles.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
