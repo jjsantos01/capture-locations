@@ -53,7 +53,8 @@ heatmapControl.onAdd = function (map) {
 heatmapControl.addTo(map);
 
 function createCategory() {
-    const color = document.getElementById('categoryColor').value;
+    const inputColor = document.getElementById('categoryColor')
+    const color = inputColor.value.trim();
     const name = document.getElementById('categoryName').value.trim();
 
     if (name) {
@@ -63,9 +64,14 @@ function createCategory() {
         document.getElementById('categoryName').value = '';
         updateLegend();
         updateCategorySelect();
+        inputColor.value = generateRandomColor();
     } else {
         alert("Por favor, introduce un nombre para la categoría.");
     }
+}
+
+function generateRandomColor() {
+    return '#' + Math.floor(Math.random()*16777215).toString(16);
 }
 
 function createCategoryButton(category) {
@@ -209,7 +215,7 @@ function loadCSV(file) {
             categories = [...new Set(coordinates.map(coord => coord.category))].map(name => {
                 return {
                     name,
-                    color: '#' + Math.floor(Math.random()*16777215).toString(16)
+                    color: generateRandomColor()
                 };
             }
             );
