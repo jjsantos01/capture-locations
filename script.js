@@ -8,6 +8,7 @@ let currentCategory;
 let currentPosition;
 
 const downloadBtn = document.getElementById('downloadBtn');
+const uploadFile = document.getElementById('uploadFile');
 const createCategoryBtn = document.getElementById('createCategoryBtn');
 const categoryButtons = document.getElementById('categoryButtons');
 const sidepanel = document.getElementById('sidepanel');
@@ -16,6 +17,12 @@ const saveDescriptionBtn = document.getElementById('saveDescription');
 const cancelDescriptionBtn = document.getElementById('cancelDescription');
 
 downloadBtn.addEventListener('click', downloadCSV);
+uploadFile.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    loadCSV(file);
+}
+);
+
 createCategoryBtn.addEventListener('click', createCategory);
 closeSidepanel.addEventListener('click', closeSidepanelHandler);
 saveDescriptionBtn.addEventListener('click', saveDescription);
@@ -113,7 +120,6 @@ function closeSidepanelHandler() {
   document.querySelector('#sidepanel h2').textContent = 'Añadir registro';
 }
 
-
 function saveDescription() {
   const description = document.getElementById('sidepanelDescription').value.trim();
   const categoryName = document.getElementById('categorySelect').value;
@@ -190,6 +196,32 @@ function downloadCSV() {
     }
 }
 
+function loadCSV(file) {
+    Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+            coordinates = results.data;
+            coordinates.forEach(coord => {
+                coord.latitude = parseFloat(coord.latitude);
+                coord.longitude = parseFloat(coord.longitude);
+            });
+            coordinates.forEach(addMarkerToMap);
+            categories = [...new Set(coordinates.map(coord => coord.category))].map(name => {
+                return {
+                    name,
+                    color: '#' + Math.floor(Math.random()*16777215).toString(16)
+                };
+            }
+            );
+            updateCategorySelect();
+            updateLegend();
+            updateCoordsList();
+            updateHeatmap();
+            categories.forEach(createCategoryButton);
+        }
+    });
+}
+
 function updateCategorySelect() {
   const select = document.getElementById('categorySelect');
   select.innerHTML = '';
@@ -264,7 +296,6 @@ function editCoordinate(event) {
 
   openSidepanel();
 }
-
 
 function deleteCoordinate(event) {
   const index = parseInt(event.target.getAttribute('data-index'));
