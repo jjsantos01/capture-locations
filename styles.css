@@ -1,23 +1,71 @@
+* {
+  box-sizing: border-box;
+}
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
   background-color: #f0f0f0;
+  flex-direction: column;
   display: flex;
 }
 .main-container {
-  flex-grow: 1;
   padding: 20px;
   transition: margin-right 0.3s;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 .container {
   background-color: white;
-  padding: 2rem;
+  padding: 15px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  width: 100%;
 }
-h1, h2 {
+h1, h2, h3 {
   color: #333;
+  margin-bottom: 15px;
+}
+#description ol {
+  padding-left: 20px;
+}
+.category-section, .file-section, .download-section {
+  margin-bottom: 30px;
+}
+.category-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+#categoryColor {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+#categoryName {
+  width: 200px;
+  max-width: 100%;
+  padding: 8px;
+  font-size: 16px;
+}
+
+#createCategoryBtn {
+  padding: 8px 15px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#createCategoryBtn:hover {
+  background-color: #45a049;
 }
 button {
   background-color: #4CAF50;
@@ -32,16 +80,23 @@ button {
   cursor: pointer;
   border-radius: 5px;
 }
-input[type="text"], input[type="color"] {
+input[type="text"], input[type="color"], button {
   margin: 5px 0;
-  padding: 5px;
+  padding: 8px;
+  font-size: 16px;
 }
 #categoryButtons {
   margin-top: 10px;
 }
 #map {
+  width: 80%;
   height: 400px;
-  margin-top: 20px;
+  margin: 20px auto;
+  display: block;
+}
+#coordsList {
+  width: 100%;
+  overflow-x: auto;
 }
 #coordsTable {
   width: 100%;
@@ -55,6 +110,7 @@ input[type="text"], input[type="color"] {
 }
 #coordsTable th {
   background-color: #f2f2f2;
+  font-weight: bold;
 }
 #coordsTable tr:nth-child(even) {
   background-color: #f9f9f9;
@@ -142,6 +198,177 @@ input[type="text"], input[type="color"] {
   color: white;
 }
 
-.delete-btn:hover {
-  background-color: #cc0000;
+#upload-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+.file-upload {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.file-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.file-label {
+  display: inline-flex;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.file-label:hover {
+  background-color: #0056b3;
+}
+
+.file-icon {
+  margin-right: 10px;
+  font-size: 1.2em;
+}
+
+.upload-info {
+  font-size: 0.9em;
+  color: #6c757d;
+  text-align: center;
+  margin: 0;
+}
+#clearLocalStorageBtn {
+  background-color: #f44336;
+}
+
+#clearLocalStorageBtn:hover {
+  background-color: #d32f2f;
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 10px;
+  }
+
+  #map {
+    width: 80%;
+    height: 300px;
+  }
+
+  #coordsTable {
+      font-size: 14px;
+  }
+
+  #coordsTable th, #coordsTable td {
+      padding: 8px;
+  }
+
+  #coordsTable thead {
+      display: none;
+}
+
+  #coordsTable, #coordsTable tbody, #coordsTable tr, #coordsTable td {
+      display: block;
+  }
+
+  #coordsTable tr {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+  }
+
+  #coordsTable td {
+      border: none;
+      position: relative;
+      padding-left: 50%;
+  }
+
+  #coordsTable td:before {
+      content: attr(data-label);
+      position: absolute;
+      left: 6px;
+      width: 45%;
+      padding-right: 10px;
+      white-space: nowrap;
+      font-weight: bold;
+  }
+
+  #coordsTable td:nth-of-type(1):before { content: "Categoría"; }
+  #coordsTable td:nth-of-type(2):before { content: "Latitud"; }
+  #coordsTable td:nth-of-type(3):before { content: "Longitud"; }
+  #coordsTable td:nth-of-type(4):before { content: "Fecha"; }
+  #coordsTable td:nth-of-type(5):before { content: "Tipo"; }
+  #coordsTable td:nth-of-type(6):before { content: "Descripción"; }
+  #coordsTable td:nth-of-type(7):before { content: "Acciones"; }
+}
+
+@media screen and (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  .main-container {
+    padding: 5px;
+  }
+
+  .container {
+    padding: 5px;
+  }
+
+  h1 {
+      font-size: 24px;
+  }
+
+  h2 {
+      font-size: 20px;
+  }
+
+  h3 {
+      font-size: 18px;
+  }
+
+  input[type="text"], button {
+      width: 100%;
+  }
+
+  #map {
+      height: 300px;
+  }
+  .category-inputs {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #categoryColor {
+      width: 100%;
+      height: 40px;
+  }
+
+  #createCategoryBtn {
+      width: 100%;
+  }
+
+  #categoryName {
+    font-size: 14px;
+}
+
+  #createCategoryBtn {
+      font-size: 14px;
+  }
+
 }

@@ -217,7 +217,7 @@ function addMarkerToMap(coord) {
         fillOpacity: 0.8
     }).addTo(map);
 
-    marker.bindTooltip(`${formatDate(coord.timestamp)}<br>${coord.description}`);
+    marker.bindTooltip(`Fecha: ${formatDate(coord.timestamp)}<br><span style="color: ${coord.color}">Categoría: ${coord.category}</span><br>Descripción: ${coord.description}`);
     markers.push(marker);
     map.setView([coord.latitude, coord.longitude], 13);
 }
@@ -322,7 +322,6 @@ function updatePageContent() {
           color: category.split('+')[1],
       };
   });
-  console.log(categories);
   updateCategorySelect();
   updateLegend();
   updateCoordsList();

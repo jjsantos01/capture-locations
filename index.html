@@ -11,25 +11,63 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="main-container">
-        <div class="container">
-            <h1>Capturador de Ubicaciones</h1>
-
-            <h2>Creador de Categorías</h2>
-            <input type="color" id="categoryColor" value="#4CAF50">
-            <input type="text" id="categoryName" placeholder="Nombre de la categoría">
-            <button id="createCategoryBtn">Crear Categoría</button>
-            <input type="file" id="uploadFile" accept=".csv">
-
-            <div id="categoryButtons"></div>
-
-            <div id="map"></div>
-            <button id="downloadBtn">Descargar CSV</button>
-            <button id="downloadGeoJSONBtn">Descargar GeoJSON</button>
-            <div id="coordsList"></div>
-            <button id="clearLocalStorageBtn">Limpiar datos</button>
+  <div class="main-container">
+    <div class="container">
+        <h1>Capturador de Ubicaciones</h1>
+        <div id="description">
+            <p>Este sitio sirve para crear un conjunto de datos georreferenciado. Así puedes usarlo:</p>
+            <ol>
+                <li>Crea una o más categorías de los eventos que quieres capturar.</li>
+                <li>Selecciona el botón del evento que quieres añadir. La primera vez te pedirá permiso para usar tu ubicación, el cual debes aceptar.</li>
+                <li>Guarda una descripción para la ubicación.</li>
+                <li>Cuando finalices, puedes descargar el conjunto de datos en formato CSV o GeoJSON.</li>
+                <li>Si ya tienes datos en CSV de una captura anterior, puedes subirlos y continuar añadiendo más registros.</li>
+            </ol>
         </div>
+
+        <div class="category-section">
+          <h2>Creador de Categorías</h2>
+          <p>Selecciona un color y escribe el nombre de la categoría que deseas crear:</p>
+          <div class="category-inputs">
+              <input type="color" id="categoryColor" value="#4CAF50">
+              <input type="text" id="categoryName" placeholder="Nombre de la categoría">
+              <button id="createCategoryBtn">Crear Categoría</button>
+          </div>
+          <div id="categoriesList">
+              <p>Selecciona una categoría:</p>
+              <div id="categoryButtons"></div>
+          </div>
+        </div>
+
+        <div id="map"></div>
+        <div id="coordsList"></div>
+
+        <section class="file-section">
+            <h3>Subir archivo CSV</h3>
+            <div id="upload-section">
+                <div class="file-upload">
+                    <input type="file" id="uploadFile" accept=".csv" class="file-input">
+                    <label for="uploadFile" class="file-label">
+                        <span class="file-icon">📁</span>
+                        <span class="file-text">Seleccionar archivo CSV</span>
+                    </label>
+                </div>
+                <p class="upload-info">Si ya tienes datos, puedes subirlos aquí</p>
+            </div>
+        </section>
+
+        <section class="download-section">
+            <h3>Descargar archivos</h3>
+            <div id="download-buttons">
+                <button id="downloadBtn">Descargar CSV</button>
+                <button id="downloadGeoJSONBtn">Descargar GeoJSON</button>
+            </div>
+        </section>
+
+        <h3>Borrar datos</h3>
+        <button id="clearLocalStorageBtn">Limpiar datos</button>
     </div>
+</div>
 
     <div id="sidepanel">
       <span id="closeSidepanel">×</span>
