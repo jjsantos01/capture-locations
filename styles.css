@@ -171,7 +171,7 @@ input[type="text"], input[type="color"], button {
   background-color: #cc0000;
 }
 
-.edit-btn, .delete-btn {
+.row-btn {
   border: none;
   border-radius: 50%;
   width: 24px;

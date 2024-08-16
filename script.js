@@ -250,7 +250,7 @@ function addMarkerToMap(coord) {
 function updateMarker(index) {
   const coord = coordinates[index];
   const marker = markers[index];
-  marker.setTooltipContent(`${formatDate(coord.timestamp)}<br>${coord.description}`);
+  marker.setTooltipContent(`Fecha: ${formatDate(coord.timestamp)}<br><span style="color: ${coord.color}">Categoría: ${coord.category}</span><br>Descripción: ${coord.description}`);
 }
 
 function downloadCSV() {
@@ -340,6 +340,7 @@ function confirmLoadCSV(file) {
 }
 
 function updatePageContent() {
+  markers.forEach(marker => map.removeLayer(marker));
   coordinates.forEach(coord => addMarkerToMap(coord));
   categories = [...new Set(coordinates.map(coord => `${coord.category}+${coord.color}`))].map(category => {
       return {
@@ -398,16 +399,16 @@ function updateCoordsList() {
             <td>${coord.tipo}</td>
             <td>${coord.description}</td>
             <td>
-                <button class="edit-btn" data-index="${index}">✏️</button>
-                <button class="delete-btn" data-index="${index}">×</button>
+                <button class="row-btn edit-btn" data-index="${index}">✏️</button>
+                <button class="row-btn delete-btn" data-index="${index}">×</button>
             </td>
         `;
     });
     list.appendChild(table);
 
     // Añadir event listeners a los botones de edición y eliminación
-    const editButtons = document.querySelectorAll('.edit-btn');
-    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const editButtons = document.querySelectorAll('.row-btn.edit-btn');
+    const deleteButtons = document.querySelectorAll('.row-btn.delete-btn');
     editButtons.forEach(button => {
         button.addEventListener('click', editCoordinate);
     });
@@ -445,8 +446,7 @@ function deleteCoordinate(event) {
 
   // Actualizar la lista de coordenadas y el mapa de calor
   saveCoordinatesToLocalStorage();
-  updateCoordsList();
-  updateHeatmap();
+  updatePageContent();
 }
 
 function formatDate(isoString) {
@@ -505,36 +505,33 @@ function toggleHeatmap() {
 function editCategory(categoryName) {
   const category = categories.find(cat => cat.name === categoryName);
 
-  const categoryInput = document.createElement('input');
-  categoryInput.type = 'text';
+  const categoryInput = document.getElementById('editCategoryName');
   categoryInput.value = category.name;
-  categoryInput.id = 'editCategoryName';
 
-  const colorInput = document.createElement('input');
-  colorInput.type = 'color';
+  const colorInput = document.getElementById('editCategoryColor');
   colorInput.value = category.color;
-  colorInput.id = 'editCategoryColor';
 
-  const saveButton = document.createElement('button');
-  saveButton.textContent = 'Guardar';
+  const saveButton = document.getElementById('saveCategoryEdit');
+
   saveButton.addEventListener('click', () => {
     const newName = document.getElementById('editCategoryName').value;
     const newColor = document.getElementById('editCategoryColor').value;
     updateCategory(category.name, newName, newColor);
-
     closeSidepanelEditCategory();
   });
 
-  const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Cancelar';
+  const cancelButton = document.getElementById('cancelCategoryEdit');
   cancelButton.addEventListener('click', closeSidepanelEditCategory);
 
-  const sidepanelContent = document.getElementById('sidepanelContentEditCategory');
-  sidepanelContent.innerHTML = '';
-  sidepanelContent.appendChild(categoryInput);
-  sidepanelContent.appendChild(colorInput);
-  sidepanelContent.appendChild(saveButton);
-  sidepanelContent.appendChild(cancelButton);
+  const deleteButton = document.getElementById('deleteCategory');
+  deleteButton.addEventListener('click', () => {
+    if (confirm(`¿Estás seguro que deseas eliminar la categoría ${category.name}?`)) {
+      coordinates = coordinates.filter(coord => coord.category !== category.name);
+      saveCoordinatesToLocalStorage();
+      updateCategories();
+      closeSidepanelEditCategory();
+    }
+  });
 
   openSidepanelEditCategory();
 }
@@ -560,8 +557,3 @@ function updateCategory(oldName, newName, newColor) {
   saveCoordinatesToLocalStorage();
   updateCategories()
 }
-
-// document.getElementById('editCategoryBtn').addEventListener('click', () => {
-//   const categoryName = document.getElementById('categorySelect').value;
-//   editCategory(categoryName);
-// });
