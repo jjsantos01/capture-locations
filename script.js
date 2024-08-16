@@ -435,18 +435,14 @@ function editCoordinate(event) {
 }
 
 function deleteCoordinate(event) {
-  const index = parseInt(event.target.getAttribute('data-index'));
-
-  // Eliminar el marcador del mapa
-  map.removeLayer(markers[index]);
-  markers.splice(index, 1);
-
-  // Eliminar la coordenada del array
-  coordinates.splice(index, 1);
-
-  // Actualizar la lista de coordenadas y el mapa de calor
-  saveCoordinatesToLocalStorage();
-  updatePageContent();
+  if (confirm("¿Estás seguro que deseas eliminar este registro?")) {
+    const index = parseInt(event.target.getAttribute('data-index'));
+    map.removeLayer(markers[index]);
+    markers.splice(index, 1);
+    coordinates.splice(index, 1);
+    saveCoordinatesToLocalStorage();
+    updatePageContent();
+  }
 }
 
 function formatDate(isoString) {
