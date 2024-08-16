@@ -35,22 +35,11 @@ cancelDescriptionBtn.addEventListener('click', closeSidepanelHandler);
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeMap();
   map.on('click', handleMapClick);
-  // Añadir control de mapa de calor
-  let heatmapControl = L.control({position: 'topright'});
-  heatmapControl.onAdd = function (map) {
-      let div = L.DomUtil.create('div', 'leaflet-control-heatmap');
-      div.innerHTML = '<button onclick="toggleHeatmap()">Mapa de Calor</button>';
-      return div;
-  };
-  heatmapControl.addTo(map);
-
   loadCoordinatesFromLocalStorage();
 });
 downloadBtn.addEventListener('click', downloadCSV);
 downloadGeoJSONBtn.addEventListener('click', downloadGeoJSON);
 clearLocalStorageBtn.addEventListener('click', confirmClearLocalStorage);
-
-// Inicializar el mapa
 
 async function initializeMap() {
   map = L.map('map').setView([0, 0], 2);
@@ -58,7 +47,6 @@ async function initializeMap() {
       attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Añadir leyenda
   legend = L.control({position: 'bottomright'});
   legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
@@ -66,6 +54,16 @@ async function initializeMap() {
     return div;
   };
   legend.addTo(map);
+
+  let heatmapControl = L.control({position: 'topright'});
+  heatmapControl.onAdd = function (map) {
+    let div = L.DomUtil.create('div', 'leaflet-control-heatmap');
+
+    div.innerHTML = '<button onclick="toggleHeatmap()">Mostrar mapa de Calor</button>';
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  heatmapControl.addTo(map);
 }
 
 function createCategory() {
@@ -496,10 +494,10 @@ function toggleHeatmap() {
     heatmapVisible = !heatmapVisible;
     if (heatmapVisible) {
         heatLayer.addTo(map);
-        document.querySelector('.leaflet-control-heatmap button').textContent = "Ocultar Mapa de Calor";
+        document.querySelector('.leaflet-control-heatmap button').textContent = "Ocultar mapa de Calor";
     } else {
         map.removeLayer(heatLayer);
-        document.querySelector('.leaflet-control-heatmap button').textContent = "Mostrar Mapa de Calor";
+        document.querySelector('.leaflet-control-heatmap button').textContent = "Mostrar mapa de Calor";
     }
 }
 
@@ -606,20 +604,26 @@ function downloadMapAsHTML() {
 <body>
    <div id="map"></div>
    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
    <script>
-        let markers = [];
-        let map;
+      let markers = [];
+      let map;
+      let heatmapVisible = false;
+      let heatLayer;
 
-       ${initializeMap.toString()}
-       ${addMarkerToMap.toString()}
-       ${formatDate.toString()}
-       ${updateLegend.toString()}
+      ${initializeMap.toString()}
+      ${addMarkerToMap.toString()}
+      ${formatDate.toString()}
+      ${updateLegend.toString()}
+      ${toggleHeatmap.toString()}
+      ${updateHeatmap.toString()}
 
-       initializeMap();
-       const coordinates = ${JSON.stringify(coordinates)};
-       const categories = ${JSON.stringify(categories)};
-       coordinates.forEach(coord => addMarkerToMap(coord));
-       updateLegend();
+      initializeMap();
+      const coordinates = ${JSON.stringify(coordinates)};
+      const categories = ${JSON.stringify(categories)};
+      coordinates.forEach(coord => addMarkerToMap(coord));
+      updateLegend();
+      updateHeatmap();
    </script>
 </body>
 </html>
