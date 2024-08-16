@@ -38,12 +38,12 @@ downloadBtn.addEventListener('click', downloadCSV);
 downloadGeoJSONBtn.addEventListener('click', downloadGeoJSON);
 clearLocalStorageBtn.addEventListener('click', confirmClearLocalStorage);
 
-
 // Inicializar el mapa
 map = L.map('map').setView([0, 0], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+map.on('click', handleMapClick);
 
 // Añadir leyenda
 let legend = L.control({position: 'bottomright'});
@@ -552,4 +552,15 @@ function updateCategory(oldName, newName, newColor) {
   });
   saveCoordinatesToLocalStorage();
   updateCategories()
+}
+
+function handleMapClick(e) {
+  // Capturar las coordenadas del clic
+  currentPosition = {
+    coords: {
+      latitude: e.latlng.lat,
+      longitude: e.latlng.lng
+    }
+  };
+  openSidepanel();
 }
