@@ -1,6 +1,7 @@
 let coordinates = [];
 let categories = [];
 let map;
+let legend;
 let markers = [];
 let heatLayer;
 let heatmapVisible = false;
@@ -31,7 +32,18 @@ closeSidepanel.addEventListener('click', closeSidepanelHandler);
 closeSidepanelEditCategorySpan.addEventListener('click', closeSidepanelEditCategory);
 saveDescriptionBtn.addEventListener('click', saveDescription);
 cancelDescriptionBtn.addEventListener('click', closeSidepanelHandler);
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeMap();
+  map.on('click', handleMapClick);
+  // Añadir control de mapa de calor
+  let heatmapControl = L.control({position: 'topright'});
+  heatmapControl.onAdd = function (map) {
+      let div = L.DomUtil.create('div', 'leaflet-control-heatmap');
+      div.innerHTML = '<button onclick="toggleHeatmap()">Mapa de Calor</button>';
+      return div;
+  };
+  heatmapControl.addTo(map);
+
   loadCoordinatesFromLocalStorage();
 });
 downloadBtn.addEventListener('click', downloadCSV);
@@ -39,29 +51,22 @@ downloadGeoJSONBtn.addEventListener('click', downloadGeoJSON);
 clearLocalStorageBtn.addEventListener('click', confirmClearLocalStorage);
 
 // Inicializar el mapa
-map = L.map('map').setView([0, 0], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-map.on('click', handleMapClick);
 
-// Añadir leyenda
-let legend = L.control({position: 'bottomright'});
-legend.onAdd = function (map) {
+async function initializeMap() {
+  map = L.map('map').setView([0, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Añadir leyenda
+  legend = L.control({position: 'bottomright'});
+  legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
     div.innerHTML = '<h4>Leyenda</h4>';
     return div;
-};
-legend.addTo(map);
-
-// Añadir control de mapa de calor
-let heatmapControl = L.control({position: 'topright'});
-heatmapControl.onAdd = function (map) {
-    let div = L.DomUtil.create('div', 'leaflet-control-heatmap');
-    div.innerHTML = '<button onclick="toggleHeatmap()">Mapa de Calor</button>';
-    return div;
-};
-heatmapControl.addTo(map);
+  };
+  legend.addTo(map);
+}
 
 function createCategory() {
     const inputColor = document.getElementById('categoryColor')
@@ -564,3 +569,72 @@ function handleMapClick(e) {
   };
   openSidepanel();
 }
+
+function downloadMapAsHTML() {
+  // Obtener el centro del mapa y el nivel de zoom
+  const center = map.getCenter();
+  const zoom = map.getZoom();
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Mapa Descargado</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+   <style>
+       #map { height: 100vh; width: 100%; }
+       .legend {
+          padding: 6px 8px;
+          font: 14px Arial, Helvetica, sans-serif;
+          background: white;
+          background: rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+          border-radius: 5px;
+          line-height: 24px;
+          color: #555;
+        }
+        .legend i {
+          width: 18px;
+          height: 18px;
+          float: left;
+          margin-right: 8px;
+          opacity: 0.7;
+        }
+   </style>
+</head>
+<body>
+   <div id="map"></div>
+   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+   <script>
+        let markers = [];
+        let map;
+
+       ${initializeMap.toString()}
+       ${addMarkerToMap.toString()}
+       ${formatDate.toString()}
+       ${updateLegend.toString()}
+
+       initializeMap();
+       const coordinates = ${JSON.stringify(coordinates)};
+       const categories = ${JSON.stringify(categories)};
+       coordinates.forEach(coord => addMarkerToMap(coord));
+       updateLegend();
+   </script>
+</body>
+</html>
+   `;
+
+  // Crear un objeto Blob con el contenido HTML
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+
+  // Crear un enlace de descarga y hacer clic en él
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'map.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+document.getElementById('downloadMapButton').addEventListener('click', downloadMapAsHTML);
