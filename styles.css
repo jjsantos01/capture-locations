@@ -138,7 +138,7 @@ input[type="text"], input[type="color"], button {
   border-radius: 5px;
   box-shadow: 0 1px 5px rgba(0,0,0,0.4);
 }
-#sidepanel {
+.sidepanel {
   position: fixed;
   top: 0;
   right: -300px;
@@ -151,10 +151,10 @@ input[type="text"], input[type="color"], button {
   padding: 20px;
   box-sizing: border-box;
 }
-#sidepanel.open {
+.sidepanel.open {
   right: 0;
 }
-#closeSidepanel {
+.closeSidepanel {
   position: absolute;
   top: 10px;
   right: 10px;

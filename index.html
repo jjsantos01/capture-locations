@@ -64,23 +64,38 @@
             </div>
         </section>
 
+        <div id="editCategorySection">
+          <h3>Editar categorías</h3>
+          <div id="categoryButtonsEdit"></div>
+        </div>
+
         <h3>Borrar datos</h3>
         <button id="clearLocalStorageBtn">Limpiar datos</button>
     </div>
 </div>
 
-    <div id="sidepanel">
-      <span id="closeSidepanel">×</span>
+    <div id="sidepanel" class="sidepanel">
+      <span id="closeSidepanel" class="closeSidepanel">×</span>
       <h2>Añadir descripción</h2>
 
-      <label for="categorySelect">Categoría:</label>
-      <select id="categorySelect"></select>
+      <div id="sidepanelContent">
+        <label for="categorySelect">Categoría:</label>
+        <select id="categorySelect"></select>
 
-      <label for="sidepanelDescription">Descripción:</label>
-      <textarea id="sidepanelDescription"></textarea>
+        <label for="sidepanelDescription">Descripción:</label>
+        <textarea id="sidepanelDescription"></textarea>
 
-      <button id="saveDescription">Guardar</button>
-      <button id="cancelDescription">Cancelar</button>
+        <button id="saveDescription">Guardar</button>
+        <button id="cancelDescription">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="sidepanelEditCategory" class="sidepanel">
+      <span id="closeSidepanelEditCategory" class="closeSidepanel">×</span>
+      <h2>Editar categoría</h2>
+      <div id="sidepanelContentEditCategory">
+      </div>
+      </div>
     </div>
 
     <script src="script.js"></script>

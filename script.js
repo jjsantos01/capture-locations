@@ -12,11 +12,14 @@ const downloadGeoJSONBtn = document.getElementById('downloadGeoJSONBtn');
 const uploadFile = document.getElementById('uploadFile');
 const createCategoryBtn = document.getElementById('createCategoryBtn');
 const categoryButtons = document.getElementById('categoryButtons');
+const categoryButtonsEdit = document.getElementById('categoryButtonsEdit');
 const sidepanel = document.getElementById('sidepanel');
 const closeSidepanel = document.getElementById('closeSidepanel');
+const closeSidepanelEditCategorySpan = document.getElementById('closeSidepanelEditCategory');
 const saveDescriptionBtn = document.getElementById('saveDescription');
 const cancelDescriptionBtn = document.getElementById('cancelDescription');
 const clearLocalStorageBtn = document.getElementById('clearLocalStorageBtn');
+const sidepanelEditCategory = document.getElementById('sidepanelEditCategory');
 
 uploadFile.addEventListener('change', (event) => {
   const file = event.target.files[0];
@@ -25,10 +28,10 @@ uploadFile.addEventListener('change', (event) => {
 );
 createCategoryBtn.addEventListener('click', createCategory);
 closeSidepanel.addEventListener('click', closeSidepanelHandler);
+closeSidepanelEditCategorySpan.addEventListener('click', closeSidepanelEditCategory);
 saveDescriptionBtn.addEventListener('click', saveDescription);
 cancelDescriptionBtn.addEventListener('click', closeSidepanelHandler);
 document.addEventListener('DOMContentLoaded', () => {
-  updateCategorySelect()
   loadCoordinatesFromLocalStorage();
 });
 downloadBtn.addEventListener('click', downloadCSV);
@@ -89,6 +92,15 @@ function createCategoryButton(category) {
     button.style.color = getContrastColor(category.color);
     button.addEventListener('click', () => startCaptureLocation(category));
     categoryButtons.appendChild(button);
+
+    const editButton = document.createElement('button');
+    editButton.textContent = `${category.name}✏️`;
+    editButton.style.backgroundColor = category.color;
+    editButton.style.color = getContrastColor(category.color);
+    editButton.addEventListener('click', () => editCategory(category.name));
+    categoryButtonsEdit.appendChild(editButton);
+
+
 }
 
 function startCaptureLocation(category) {
@@ -122,6 +134,11 @@ function openSidepanel() {
   }
 }
 
+function openSidepanelEditCategory() {
+  sidepanelEditCategory.classList.add('open');
+  document.querySelector('.main-container').style.marginRight = '300px';
+}
+
 function closeSidepanelHandler() {
   sidepanel.classList.remove('open');
   document.querySelector('.main-container').style.marginRight = '0';
@@ -132,6 +149,11 @@ function closeSidepanelHandler() {
   document.getElementById('saveDescription').textContent = 'Guardar';
   document.getElementById('cancelDescription').textContent = 'Cancelar';
   document.querySelector('#sidepanel h2').textContent = 'Añadir registro';
+}
+
+function closeSidepanelEditCategory() {
+  sidepanelEditCategory.classList.remove('open');
+  document.querySelector('.main-container').style.marginRight = '0';
 }
 
 function saveDescription() {
@@ -191,6 +213,7 @@ function clearLocalStorage() {
   updateHeatmap();
   updateLegend();
   document.getElementById('categoryButtons').innerHTML = '';
+  document.getElementById('categoryButtonsEdit').innerHTML = '';
 }
 
 function confirmClearLocalStorage() {
@@ -328,7 +351,11 @@ function updatePageContent() {
   updateLegend();
   updateCoordsList();
   updateHeatmap();
-  categories.forEach(createCategoryButton);
+  categoryButtons.innerHTML = ''
+  categoryButtonsEdit.innerHTML = ''
+  categories.forEach(category => {
+    createCategoryButton(category);
+  } );
 }
 
 function updateCategorySelect() {
@@ -474,3 +501,67 @@ function toggleHeatmap() {
         document.querySelector('.leaflet-control-heatmap button').textContent = "Mostrar Mapa de Calor";
     }
 }
+
+function editCategory(categoryName) {
+  const category = categories.find(cat => cat.name === categoryName);
+
+  const categoryInput = document.createElement('input');
+  categoryInput.type = 'text';
+  categoryInput.value = category.name;
+  categoryInput.id = 'editCategoryName';
+
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color';
+  colorInput.value = category.color;
+  colorInput.id = 'editCategoryColor';
+
+  const saveButton = document.createElement('button');
+  saveButton.textContent = 'Guardar';
+  saveButton.addEventListener('click', () => {
+    const newName = document.getElementById('editCategoryName').value;
+    const newColor = document.getElementById('editCategoryColor').value;
+    updateCategory(category.name, newName, newColor);
+
+    closeSidepanelEditCategory();
+  });
+
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Cancelar';
+  cancelButton.addEventListener('click', closeSidepanelEditCategory);
+
+  const sidepanelContent = document.getElementById('sidepanelContentEditCategory');
+  sidepanelContent.innerHTML = '';
+  sidepanelContent.appendChild(categoryInput);
+  sidepanelContent.appendChild(colorInput);
+  sidepanelContent.appendChild(saveButton);
+  sidepanelContent.appendChild(cancelButton);
+
+  openSidepanelEditCategory();
+}
+
+function updateCategories() {
+  categories = coordinates.map(coord => `${coord.category}+${coord.color}`).map(category => {
+    return {
+      name: category.split('+')[0],
+      color: category.split('+')[1],
+    };
+  }
+  )
+  updatePageContent();
+}
+
+function updateCategory(oldName, newName, newColor) {
+  coordinates.forEach(coord => {
+    if (coord.category === oldName) {
+      coord.category = newName;
+      coord.color = newColor;
+    }
+  });
+  saveCoordinatesToLocalStorage();
+  updateCategories()
+}
+
+// document.getElementById('editCategoryBtn').addEventListener('click', () => {
+//   const categoryName = document.getElementById('categorySelect').value;
+//   editCategory(categoryName);
+// });
