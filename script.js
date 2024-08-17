@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initializeMap();
   map.on('click', handleMapClick);
   loadCoordinatesFromLocalStorage();
+  setupCollapsibleSections();
 });
 downloadBtn.addEventListener('click', downloadCSV);
 downloadGeoJSONBtn.addEventListener('click', downloadGeoJSON);
@@ -639,6 +640,23 @@ function downloadMapAsHTML() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function setupCollapsibleSections() {
+  const collapsibles = document.querySelectorAll('.collapsible-header');
+
+  collapsibles.forEach(header => {
+      header.addEventListener('click', function() {
+          this.classList.toggle('active');
+          const content = this.nextElementSibling;
+
+          if (content.style.maxHeight) {
+              content.style.maxHeight = null;
+          } else {
+              content.style.maxHeight = content.scrollHeight + "px";
+          }
+      });
+  });
 }
 
 document.getElementById('downloadMapButton').addEventListener('click', downloadMapAsHTML);

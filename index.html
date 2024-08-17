@@ -13,12 +13,13 @@
 <body>
   <div class="main-container">
     <div class="container">
-        <h1>Capturador de Ubicaciones</h1>
-        <div id="description">
-            <p>Este sitio sirve para crear un conjunto de datos georreferenciado. Así puedes usarlo:</p>
+      <h1>Capturador de Ubicaciones</h1>
+      <p>Genera tu conjunto de datos georreferenciados. Basado en el sitio de <a href="https://www.ladata.mx/traza/" target="_blank">Traza by La Data</a>.</p>
+        <h3 class="collapsible-header">Instrucciones</h3>
+        <div id="description" class="collapsible-content">
             <ol>
                 <li>Crea una o más categorías de los eventos que quieres capturar.</li>
-                <li>Cuando quiera añadir una ubicación tienes dos opciones:</li>
+                <li>Cuando quieras añadir una ubicación tienes dos opciones:</li>
                 <ul>
                     <li>Haz clic en el botón de la categoría que creaste en el paso anterior para usar tu ubicación actual.</li>
                     <li>Haz clic en el mapa para seleccionar una ubicación.</li>
@@ -81,18 +82,59 @@
         <h3>Borrar datos</h3>
         <button id="clearLocalStorageBtn">Limpiar datos</button>
 
-        <div id="infoPublish">
-          <h3>¿Quieres publicar tu mapa?</h3>
-          <p>
-            Si después de capturar todas las ubicaciones quieres
-            hacer público tu mapa para que los demas puedan verlo, la forma más fácil es exportar el mapa
-            en formato HTML. Luego, tienes que subir el archivo a un
-            servicio de alojamiento de archivos estáticos como <a href="https://tiiny.host/" target="_blank">Tiiny Host</a> o
-            o <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-            Tiny Host es mucho más sencillo, solo tienes que subir
-            el archivo html, registrarte con un correo electrónico, personalizar
-            el nombre de la URL y la plataforma te dará un enlace para compartir.
-          </p>
+        <div id="infoSection>" class="info-section">
+          <h3>Información adicional</h3>
+          <h4 class="collapsible-header">¿Quieres publicar tu mapa?</h4>
+          <div class="collapsible-content" id="infoPublish">
+            <p>
+              Si después de capturar todas las ubicaciones quieres
+              hacer público tu mapa para que los demas puedan verlo, la forma más fácil es exportar el mapa
+              en formato HTML. Luego, tienes que subir el archivo a un
+              servicio de alojamiento de archivos estáticos como <a href="https://tiiny.host/" target="_blank">Tiiny Host</a> o
+              o <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
+              Tiny Host es mucho más sencillo, solo tienes que subir
+              el archivo html, registrarte con un correo electrónico, personalizar
+              el nombre de la URL y la plataforma te dará un enlace para compartir.
+            </p>
+          </div>
+          <h4 class="collapsible-header">Cargar puntos en Google Maps</h4>
+          <div class="collapsible-content">
+            <p>
+              Si prefieres cargar tu mapa en Google Maps, puedes hacerlo
+              exportando los datos en formato CSV y luego importarlos
+              en Google My Maps. Para hacerlo, sigue estos pasos:
+              <ol>
+                <li>Descarga el archivo CSV.</li>
+                <li>Ve a <a href="https://www.google.com/maps/d/" target="_blank">Google My Maps</a> y haz clic en "Crear un mapa".</li>
+                <li>En la barra lateral izquierda, haz clic en "Importar" y selecciona en "Subir" el archivo CSV.</li>
+                <li>Selecciona solo las columnas "Latitude" y "Longitude" según corresponda para indicar las coordendas.
+                   Luego también puedes escoger una columna para ser título de tus marcadores, aquí podrías escoger la columna "description" o "category"
+                </li>
+                <li>Google My Maps importará todos los datos y los mostrará en el mapa.
+                    Puedes personalizar los marcadores haciendo clic en estilos individuales,
+                    luego escoger en "Agrupar sitios por" y seleccionar la columna "category" para poner color a los marcadores por categoría.
+                    También puedes cambiar el icono de los marcadores y agregar etiquetas personalizadas.
+                </li>
+                <li>Finalmente, puedes compartir el mapa con otras personas.</li>
+            </p>
+          </div>
+          <h4 class="collapsible-header">Hacer mapa colaborativo en Google Maps</h4>
+          <div class="collapsible-content">
+            <p>
+              Si quieras que otras personas puedan añadir ubicaciones al mapa,
+              puedes hacer un mapa colaborativo en Google Maps. Estos son los pasos para hacerlo:
+            </p>
+              <ol>
+                <li> Sigue las Instrucciones anteriores para cargar los puntos en Google Maps.</li>
+                <li> En los controles del mapa, selecciona "Compartir" y luego escoge "Compartir en Drive".</li>
+                <li>Puedes seleccionar invitar a personas por correo electrónico o
+              "Obtener enlace para compartir" y copiar el enlace para compartirlo.</li>
+              <li>Selecciona el rol "Editar" para que otros puedan añadir ubicaciones.</li>
+              </ol>
+              <p>Debes tener mucho cuidado al permitir que cualquiera edite tus mapas, ya que pueden insertar información errónea o maliciosa.</p>
+
+          </div>
+
       </div>
     </div>
 </div>
