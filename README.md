@@ -1,9 +1,10 @@
 # capture-locations
 
-This is a dummy project to test the coding abilities of LLM models like GPT, Claude, and Gemini.
+This is a project to test the coding abilities of LLM models like GPT, Claude, and Gemini.
 
-I'm trying to mimic the functionality of the amazing website ["Traza"](https://www.ladata.mx/traza/), by La Data, which I think is smart, useful, and simple.
+I'm aiming to replicate and enhance the functionality of the impressive ["Traza"](https://www.ladata.mx/traza/) website by La Data, which I find it to be intelligent, practical, and straightforward.
 
 Check the generated page using Claude Sonet 3.5 at https://jjsantos01.github.io/capture-locations/
 
-
+## Rendered page
+![](images/capture-locations.png)
