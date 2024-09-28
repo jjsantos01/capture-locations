@@ -412,3 +412,21 @@ input[type="text"], input[type="color"], button {
   }
 
 }
+
+footer {
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 20px;
+  padding: 10px 0;
+  background-color: #f4f4f4;
+}
+
+footer a {
+  color: #666;
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: #333;
+}
